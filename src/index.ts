@@ -17,6 +17,8 @@
 
 export { wrapWithCompliance } from './wrapper/compliance-wrapper.js';
 export { verifyChain } from './logger/hash-chain.js';
+export { doraFintech } from './templates/dora-fintech.js';
+export { gdprEcommerce } from './templates/gdpr-ecommerce.js';
 
 // ---------------------------------------------------------------------------
 // Type-only exports
