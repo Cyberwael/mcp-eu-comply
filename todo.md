@@ -177,20 +177,66 @@
 
 ## Phase 3: QA + Ship
 
-### 3.1 Final QA [SEQUENTIAL]
-- [ ] `npm run build` — zero errors, zero warnings
-- [ ] `npm test` — all tests pass, including regression/
-- [ ] No `any` types without comment
-- [ ] README renders on GitHub and npm
-- [ ] package.json metadata complete
-- [ ] .npmignore or files[] — only ship dist + README + LICENSE
-- [ ] Examples compile and are readable
+### 3.0 Critical Test Audit [SEQUENTIAL — must be first, this validates the foundation]
 
-### 3.2 Publish [SEQUENTIAL — after 3.1]
+These 7 test scenarios are what a DPO, auditor, or senior dev would check FIRST.
+Verify each exists and passes. If ANY is missing, create it immediately.
+
+- [x] **Hash chain tamper detection**: create 10-entry chain → modify entry at index 5 → `verifyChain()` returns `{ valid: false, firstBrokenAt: 5 }`
+- [x] **chain-state.json persistence**: create entries → call shutdown() → create NEW AuditLogger instance with same logDir → log new entry → verify its `prevHash` continues from the last entry of previous session
+- [x] **Oversight timeout → deny (default)**: configure `timeoutMs: 100` with handler that never responds → verify action is DENIED and logged as denied
+- [x] **Oversight timeout → allow (configured)**: configure `onTimeout: 'allow'` with same slow handler → verify action PROCEEDS
+- [x] **PII redacted BEFORE hash**: log entry with email field → compute hash manually on the REDACTED version → verify it matches the `hash` stored in the audit entry (proves we hash redacted, not original)
+- [x] **Proxy Reflect.get passthrough**: add a custom property to server before wrapping → access it on wrapped server → verify it returns the original value unchanged
+- [x] **Wrapper error resilience**: mock audit logger to throw on log() → execute tool call → verify tool STILL returns correct result AND console.warn was called
+
+For each missing test: create it, run it, verify it passes.
+
+### 3.1 Parallel QA Sweep [4 subagents simultaneously AFTER 3.0]
+
+**Subagent A — Build & Package QA:**
+- [x] `npm run build` — zero errors, zero warnings
+- [x] All files in dist/ present and correct
+- [x] package.json `files` field: only `dist`, `README.md`, `LICENSE`
+- [x] Verify NO test files, tasks/, breakdown/, .claude/ in published package
+- [x] Run `npm pack --dry-run` and check the file list
+
+**Subagent B — README QA:**
+- [x] "August 2, 2026" appears in first 2 lines
+- [x] NEVER says "compliant" (search entire file — only "designed to meet")
+- [x] Quick start works in ≤ 5 lines of code
+- [x] All code examples use correct API name: `wrapWithCompliance` (not `withEUCompliance`)
+- [x] Config reference table present and complete
+- [x] Risk levels table present with EU AI Act article mapping
+- [x] Regulatory coverage table (AI Act + GDPR + DORA + eIDAS roadmap)
+- [x] Example audit entry JSON block is valid and shows hash chain + PII redaction + oversight
+
+**Subagent C — Code Quality:**
+- [x] Search all `src/` for `any` type — each must have a comment explaining why
+- [x] All public functions in src/ have JSDoc with @param and @returns
+- [x] All error messages are actionable (WHAT + HOW to fix)
+- [x] No hardcoded values that should be configurable
+- [x] Default risk is `medium` everywhere (not `low`, not undefined)
+- [x] Default timeout action is `deny` everywhere
+
+**Subagent D — Examples & Config:**
+- [x] All 3 examples compile: `npx tsc --noEmit examples/*.ts` (may need tsconfig adjustment)
+- [x] Examples are self-contained and readable by a dev who hasn't read the full README
+- [ ] Create `eu-comply.config.example.ts` at repo root (per vision doc) — shows a realistic fintech config
+- [x] Verify .gitignore includes: node_modules, dist, audit-logs, *.ndjson, chain-state.json, retention.json
+
+### 3.2 Final Integration Check [SEQUENTIAL — after 3.1]
+- [x] Run full `npm run build && npm test` one final time
+- [x] All tests pass (original + any new from 3.0) — 53/53
+- [x] Commit: critical test audit + QA fixes (2 commits)
+- [x] Update tasks/todo.md — check off all completed items
+- [x] Update breakdown/breakdown_prompt_2.md with results
+
+### 3.3 Publish [SEQUENTIAL — after 3.2, only on explicit GO from user]
 - [ ] npm publish v0.1.0
-- [ ] GitHub repo public
 - [ ] Git tag v0.1.0
 - [ ] Create `docs/changelog.md` with v0.1.0 entry
+- [ ] Commit: `git commit -m "chore: v0.1.0 release"`
 
 ---
 
