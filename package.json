@@ -1,0 +1,44 @@
+{
+  "name": "mcp-eu-comply",
+  "version": "0.1.0",
+  "description": "Runtime EU AI Act compliance wrapper for MCP servers. Audit logging with hash chain, human oversight, risk classification, and PII redaction — designed to meet Article 12, 14, and 19 requirements.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "dev": "tsc --watch"
+  },
+  "keywords": [
+    "mcp",
+    "eu-ai-act",
+    "compliance",
+    "gdpr",
+    "dora",
+    "audit-logging",
+    "hash-chain",
+    "model-context-protocol",
+    "ai-agents",
+    "human-oversight"
+  ],
+  "author": "cyberwael",
+  "license": "MIT",
+  "peerDependencies": {
+    "@modelcontextprotocol/sdk": ">=1.0.0"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/sdk": "^1.27.0",
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ]
+}

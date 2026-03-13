@@ -1,0 +1,10 @@
+node_modules/
+dist/
+audit-logs/
+*.ndjson
+chain-state.json
+retention.json
+.DS_Store
+*.tsbuildinfo
+.env
+.env.*
