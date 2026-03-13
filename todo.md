@@ -233,15 +233,18 @@ These 7 test scenarios are what a DPO, auditor, or senior dev would check FIRST.
 - [x] tasks/todo.md updated
 - [x] breakdown/breakdown_prompt_2.md written
 
-### 3.3 Publish [SEQUENTIAL — when instructed in a prompt. Claude Code does everything.]
-- [x] Run `npm whoami` — FAILED: ENEEDAUTH. STOPPED per Execution Model.
-- [ ] `npm publish --access public` — BLOCKED: awaiting `npm login`
-- [ ] `git tag v0.1.0`
-- [ ] `git push origin main --tags`
-- [ ] Verify: `npm view mcp-eu-comply` shows v0.1.0
-- [x] Create `docs/changelog.md` with v0.1.0 entry
-- [x] Create `CONTRIBUTING.md`
-- [x] Commit: `docs: v0.1.0 changelog, contributing guide, and content drafts`
+### 3.3 Publish [SEQUENTIAL — Claude Code does everything. Push after every commit.]
+
+**npm auth is configured** (user ran `npm login`).
+- [x] Run `npm whoami` — returned `cyberwael` ✅
+- [x] Add `prepublishOnly` script to package.json
+- [x] Commit + push: `chore: add prepublishOnly guard` (cea8cba)
+- [x] `npm publish --access public` — **PUBLISHED** `+ mcp-eu-comply@0.1.0` ✅
+- [x] `git tag v0.1.0` ✅
+- [x] `git push origin main --tags` ✅
+- [x] Verify: `npm view mcp-eu-comply` → `0.1.0` ✅
+- [x] Verify `docs/changelog.md` exists ✅
+- [x] Commit + push: `chore: v0.1.0 published to npm`
 
 ---
 
@@ -249,12 +252,12 @@ These 7 test scenarios are what a DPO, auditor, or senior dev would check FIRST.
 
 ### 4.1 Content & SEO [PARALLEL with 4.2]
 Target queries devs will search May-July 2026:
-- [x] Article: "EU AI Act MCP compliance" — DRAFT in `docs/content/article-eu-ai-act-mcp.md`
+- [ ] Article: "EU AI Act MCP compliance" — foundational article, rank for this query
 - [ ] Article: "AI Act Article 12 logging requirements for AI agents" — technical guide
 - [ ] Article: "DORA AI agent compliance fintech" — targeted at fintechs
 - [ ] Article: "How to make MCP server EU compliant" — practical tutorial
 - [ ] Publish on Medium + dev.to (dual SEO). Each article links to the npm package.
-- [x] Show HN: DRAFT in `docs/content/show-hn-draft.md`
+- [ ] Show HN: "mcp-eu-comply — EU AI Act compliance for MCP servers in one line"
 - [ ] Posts: r/artificial, r/MachineLearning, r/europrivacy, r/fintech
 
 ### 4.2 NIST [PARALLEL with 4.1]
