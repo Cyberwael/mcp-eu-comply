@@ -1,7 +1,12 @@
 # Internal project management (Claude Code — NOT public)
 CLAUDE.md
 FIRST_PROMPT.md
+VISION.md
 PROMPT_*.md
+todo.md
+lessons.md
+eu-ai-act-mapping.md
+architecture.md
 tasks/
 breakdown/
 .claude/
