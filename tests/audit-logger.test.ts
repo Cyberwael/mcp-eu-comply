@@ -368,33 +368,27 @@ describe('AuditLogger', () => {
     const today = todayUTC();
     const report = await logger.generateReport(today, today);
 
-    expect(report.totalActions).toBe(4);
-    expect(report.from).toBe(today);
-    expect(report.to).toBe(today);
+    expect(report.totalEntries).toBe(4);
+    expect(report.generatedAt).toBeDefined();
 
-    // Risk breakdown
-    expect(report.byRisk.low).toBe(1);
-    expect(report.byRisk.medium).toBe(1);
-    expect(report.byRisk.high).toBe(1);
-    expect(report.byRisk.critical).toBe(1);
+    // Risk distribution
+    expect(report.riskDistribution.low).toBe(1);
+    expect(report.riskDistribution.medium).toBe(1);
+    expect(report.riskDistribution.high).toBe(1);
+    expect(report.riskDistribution.critical).toBe(1);
 
-    // Result breakdown
-    expect(report.byResult.success).toBe(2);
-    expect(report.byResult.error).toBe(1);
-    expect(report.byResult.denied).toBe(1);
+    // Oversight summary
+    expect(report.oversightSummary.notRequired).toBe(2);
+    expect(report.oversightSummary.approved).toBe(1);
+    expect(report.oversightSummary.denied).toBe(1);
+    expect(report.oversightSummary.totalRequired).toBe(2);
 
-    // Oversight breakdown
-    expect(report.byOversight['not-required']).toBe(2);
-    expect(report.byOversight.approved).toBe(1);
-    expect(report.byOversight.denied).toBe(1);
-
-    // Tools called
-    expect(report.toolsCalled).toContain('read_file');
-    expect(report.toolsCalled).toContain('delete_db');
-    expect(report.toolsCalled).toHaveLength(4);
+    // Time range
+    expect(report.timeRange.first).toBeDefined();
+    expect(report.timeRange.last).toBeDefined();
 
     // Chain integrity
     expect(report.chainIntegrity.valid).toBe(true);
-    expect(report.chainIntegrity.entries).toBe(4);
+    expect(report.chainIntegrity.totalEntries).toBe(4);
   });
 });

@@ -39,5 +39,6 @@ export type {
   OversightNotification,
   OversightResult,
   ChainVerificationResult,
+  VerifyResult,
   ComplianceReport,
 } from './types.js';

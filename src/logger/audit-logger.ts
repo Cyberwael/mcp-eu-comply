@@ -14,8 +14,7 @@ import type {
   OversightResult,
   RiskLevel,
   ComplianceReport,
-  OversightStatus,
-  ChainVerificationResult,
+  VerifyResult,
 } from '../types.js';
 import { computeEntryHash, loadChainState, saveChainState, verifyChain } from './hash-chain.js';
 import { redactFields } from './pii-redactor.js';
@@ -151,39 +150,58 @@ export class AuditLogger {
     const entries = await this.readEntriesInRange(from, to);
 
     // Compute summary stats
-    const byRisk: Record<RiskLevel, number> = { low: 0, medium: 0, high: 0, critical: 0 };
-    const byOversight: Record<OversightStatus, number> = {
+    const riskDistribution: Record<RiskLevel, number> = { low: 0, medium: 0, high: 0, critical: 0 };
+    const oversightSummary = {
+      totalRequired: 0,
       approved: 0,
       denied: 0,
       timeout: 0,
-      'not-required': 0,
+      notRequired: 0,
     };
-    const byResult: Record<'success' | 'error' | 'denied', number> = {
-      success: 0,
-      error: 0,
-      denied: 0,
-    };
-    const toolsSet = new Set<string>();
+    let piiRedactionCount = 0;
 
     for (const entry of entries) {
-      byRisk[entry.risk]++;
-      byOversight[entry.oversight.status]++;
-      byResult[entry.result.status]++;
-      toolsSet.add(entry.tool);
+      riskDistribution[entry.risk]++;
+
+      if (entry.oversight.required) {
+        oversightSummary.totalRequired++;
+      }
+      if (entry.oversight.status === 'approved') oversightSummary.approved++;
+      else if (entry.oversight.status === 'denied') oversightSummary.denied++;
+      else if (entry.oversight.status === 'timeout') oversightSummary.timeout++;
+      else oversightSummary.notRequired++;
+
+      // Check if any args contain redacted markers
+      const argsStr = JSON.stringify(entry.args);
+      if (argsStr.includes('***REDACTED***')) {
+        piiRedactionCount++;
+      }
     }
 
     // Verify chain integrity
-    const chainIntegrity: ChainVerificationResult = await verifyChain(this.config.outputDir);
+    const chainVerification = await verifyChain(this.config.outputDir);
+    const chainIntegrity: VerifyResult = {
+      valid: chainVerification.valid,
+      totalEntries: chainVerification.entries,
+      ...(chainVerification.firstBrokenAt !== undefined ? { firstBrokenAt: chainVerification.firstBrokenAt } : {}),
+      checkedAt: new Date().toISOString(),
+    };
+
+    // Time range
+    const firstTimestamp = entries.length > 0 ? entries[0]!.timestamp : '';
+    const lastTimestamp = entries.length > 0 ? entries[entries.length - 1]!.timestamp : '';
 
     return {
-      from,
-      to,
-      totalActions: entries.length,
-      byRisk,
-      byOversight,
-      byResult,
-      toolsCalled: Array.from(toolsSet),
       chainIntegrity,
+      totalEntries: entries.length,
+      timeRange: {
+        first: firstTimestamp,
+        last: lastTimestamp,
+      },
+      riskDistribution,
+      oversightSummary,
+      piiRedactionCount,
+      generatedAt: new Date().toISOString(),
     };
   }
 

@@ -201,6 +201,9 @@ export interface ComplianceConfig {
 
   /** Data residency and PII redaction configuration (optional). */
   dataResidency?: DataResidencyConfig;
+
+  /** Optional agent identifier for multi-agent setups. Added in v0.2. */
+  agentId?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -278,32 +281,68 @@ export interface ChainVerificationResult {
 }
 
 // ---------------------------------------------------------------------------
-// Report
+// Verify Result (v0.2)
 // ---------------------------------------------------------------------------
 
-/** Summary report of audit log activity for a given period. */
+/** Result of CLI hash chain verification. Added in v0.2. */
+export interface VerifyResult {
+  /** Whether the chain is valid. */
+  valid: boolean;
+
+  /** Total number of entries verified. */
+  totalEntries: number;
+
+  /** Index (0-based) of the first broken entry, if any. */
+  firstBrokenAt?: number;
+
+  /** ID of the broken entry, if any. */
+  brokenEntryId?: string;
+
+  /** Agent filter applied (if any). */
+  agentId?: string;
+
+  /** ISO 8601 timestamp of when the check was performed. */
+  checkedAt: string;
+}
+
+// ---------------------------------------------------------------------------
+// Report (v0.2 — updated shape)
+// ---------------------------------------------------------------------------
+
+/** Summary compliance report for auditors. Updated in v0.2. */
 export interface ComplianceReport {
-  /** Start of the report period (ISO 8601 UTC). */
-  from: string;
+  /** Hash chain integrity result. */
+  chainIntegrity: VerifyResult;
 
-  /** End of the report period (ISO 8601 UTC). */
-  to: string;
+  /** Total number of entries in the report scope. */
+  totalEntries: number;
 
-  /** Total number of logged actions. */
-  totalActions: number;
+  /** Time range covered by the entries. */
+  timeRange: {
+    /** ISO 8601 timestamp of the first entry. */
+    first: string;
+    /** ISO 8601 timestamp of the last entry. */
+    last: string;
+  };
 
-  /** Breakdown by risk level. */
-  byRisk: Record<RiskLevel, number>;
+  /** Count of entries per risk level. */
+  riskDistribution: Record<RiskLevel, number>;
 
-  /** Breakdown by oversight status. */
-  byOversight: Record<OversightStatus, number>;
+  /** Summary of oversight decisions. */
+  oversightSummary: {
+    totalRequired: number;
+    approved: number;
+    denied: number;
+    timeout: number;
+    notRequired: number;
+  };
 
-  /** Breakdown by result status. */
-  byResult: Record<'success' | 'error' | 'denied', number>;
+  /** Number of entries with at least one PII-redacted field. */
+  piiRedactionCount: number;
 
-  /** List of unique tools called. */
-  toolsCalled: string[];
+  /** Agent filter applied (if any). */
+  agentId?: string;
 
-  /** Hash chain integrity status. */
-  chainIntegrity: ChainVerificationResult;
+  /** ISO 8601 timestamp of when the report was generated. */
+  generatedAt: string;
 }
