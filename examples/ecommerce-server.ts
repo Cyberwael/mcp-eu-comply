@@ -21,8 +21,8 @@
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { wrapWithCompliance } from '../src/index.js';
-import type { ComplianceConfig } from '../src/index.js';
+import { wrapWithCompliance } from 'mcp-eu-comply';
+import type { ComplianceConfig } from 'mcp-eu-comply';
 
 // ---------------------------------------------------------------------------
 // Compliance configuration

@@ -16,9 +16,9 @@ import type {
   ComplianceReport,
   OversightStatus,
   ChainVerificationResult,
-} from '../types';
-import { computeEntryHash, loadChainState, saveChainState, verifyChain } from './hash-chain';
-import { redactFields } from './pii-redactor';
+} from '../types.js';
+import { computeEntryHash, loadChainState, saveChainState, verifyChain } from './hash-chain.js';
+import { redactFields } from './pii-redactor.js';
 import * as crypto from 'node:crypto';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';

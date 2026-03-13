@@ -11,7 +11,7 @@
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { wrapWithCompliance } from '../src/index.js';
+import { wrapWithCompliance } from 'mcp-eu-comply';
 
 const server = new McpServer({ name: 'basic-example', version: '1.0.0' });
 

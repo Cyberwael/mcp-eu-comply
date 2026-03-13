@@ -11,7 +11,7 @@
 import { createHash } from 'crypto';
 import { readdir, readFile, writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
-import type { AuditLogEntry, ChainVerificationResult } from '../types';
+import type { AuditLogEntry, ChainVerificationResult } from '../types.js';
 
 // ---------------------------------------------------------------------------
 // Constants
