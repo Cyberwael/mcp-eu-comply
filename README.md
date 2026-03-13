@@ -199,6 +199,65 @@ console.log(result);
 // { valid: false, entries: 14208, firstBrokenAt: 9451, error: "Hash mismatch at entry 9451" }
 ```
 
+## CLI Tools
+
+Verify your audit chain:
+
+```bash
+npx mcp-eu-comply verify --dir ./audit-logs
+```
+
+Generate a compliance report:
+
+```bash
+npx mcp-eu-comply report --dir ./audit-logs --format human
+```
+
+Filter by agent in multi-agent setups:
+
+```bash
+npx mcp-eu-comply verify --dir ./audit-logs --agent payment-service
+```
+
+Exit codes: `0` = valid chain, `1` = broken chain, `2` = file error.
+
+## Templates
+
+Pre-built compliance configurations for regulated industries:
+
+```typescript
+import { wrapWithCompliance, doraFintech } from "mcp-eu-comply";
+
+const server = wrapWithCompliance(mcpServer, {
+  ...doraFintech,
+  logging: { outputDir: "./audit-logs" },
+});
+```
+
+Available templates:
+
+| Template | Industry | Risk rules | Oversight | PII fields | Retention |
+|---|---|---|---|---|---|
+| `doraFintech` | Financial services (DORA) | payment/transfer → critical | critical + high require approval | 10 fields incl. IBAN, BIC | 1825 days (5 years) |
+| `gdprEcommerce` | E-commerce (GDPR) | delete/drop → critical | critical requires approval | 6 fields incl. credit_card | — |
+
+## Multi-Agent Support
+
+For setups with multiple MCP servers sharing the same log directory:
+
+```typescript
+const server = wrapWithCompliance(mcpServer, {
+  ...config,
+  agentId: "payment-service",  // Each agent gets its own hash chain
+});
+```
+
+Each agent maintains an independent hash chain (`chain-state-{agentId}.json`). Entries are stored in shared NDJSON files with the `agentId` field. Verify or report on a single agent's chain:
+
+```bash
+npx mcp-eu-comply verify --dir ./audit-logs --agent payment-service
+```
+
 ## Important disclaimer
 
 > This package is **designed to meet** EU AI Act Article 12, 14, and 19 requirements. It is NOT certified or officially approved — the CEN/CENELEC harmonised standards are still being drafted. Use as part of a broader compliance strategy.
@@ -212,10 +271,11 @@ Zero external runtime dependencies. Peer dependency on `@modelcontextprotocol/sd
 - [x] Pattern-based risk classification
 - [x] Deep recursive PII redaction
 - [x] Compliance report generation
-- [ ] CLI validator (`npx mcp-eu-comply verify`)
+- [x] CLI validator (`npx mcp-eu-comply verify` + `report`)
 - [ ] PDF audit reports
 - [ ] Dashboard SaaS
-- [ ] DORA-specific templates
+- [x] DORA fintech + GDPR e-commerce templates
+- [x] Multi-agent chain isolation
 - [ ] eIDAS 2.0 identity bridge
 
 ## License
