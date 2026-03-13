@@ -1,6 +1,6 @@
 {
   "name": "mcp-eu-comply",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Runtime EU AI Act compliance wrapper for MCP servers. Audit logging with hash chain, human oversight, risk classification, and PII redaction — designed to meet Article 12, 14, and 19 requirements.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
