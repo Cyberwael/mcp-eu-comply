@@ -20,6 +20,19 @@ import type { AuditLogEntry, ChainVerificationResult } from '../types.js';
 const GENESIS_HASH = 'genesis';
 const CHAIN_STATE_FILE = 'chain-state.json';
 
+/**
+ * Returns the chain-state filename, namespaced by agentId if provided.
+ *
+ * @param agentId - Optional agent identifier for multi-agent isolation.
+ * @returns `chain-state-{agentId}.json` if agentId is set, or `chain-state.json` otherwise.
+ */
+function getChainStatePath(agentId?: string): string {
+  if (agentId !== undefined && agentId.length > 0) {
+    return `chain-state-${agentId}.json`;
+  }
+  return CHAIN_STATE_FILE;
+}
+
 // ---------------------------------------------------------------------------
 // Hash Computation
 // ---------------------------------------------------------------------------
@@ -61,11 +74,12 @@ export function getGenesisHash(): string {
  * Returns "genesis" if the file does not exist (fresh start).
  *
  * @param logDir - Absolute path to the audit log directory.
+ * @param agentId - Optional agent identifier for multi-agent chain isolation.
  * @returns The last persisted hash, or "genesis" if no state file exists.
  */
-export async function loadChainState(logDir: string): Promise<string> {
+export async function loadChainState(logDir: string, agentId?: string): Promise<string> {
   try {
-    const raw = await readFile(join(logDir, CHAIN_STATE_FILE), 'utf-8');
+    const raw = await readFile(join(logDir, getChainStatePath(agentId)), 'utf-8');
     const state = JSON.parse(raw) as { lastHash: string; updatedAt: string };
     return state.lastHash;
   } catch (err: unknown) {
@@ -81,14 +95,15 @@ export async function loadChainState(logDir: string): Promise<string> {
  *
  * @param logDir - Absolute path to the audit log directory.
  * @param lastHash - The hash of the most recent audit log entry.
+ * @param agentId - Optional agent identifier for multi-agent chain isolation.
  */
-export async function saveChainState(logDir: string, lastHash: string): Promise<void> {
+export async function saveChainState(logDir: string, lastHash: string, agentId?: string): Promise<void> {
   await mkdir(logDir, { recursive: true });
   const state = {
     lastHash,
     updatedAt: new Date().toISOString(),
   };
-  await writeFile(join(logDir, CHAIN_STATE_FILE), JSON.stringify(state, null, 2), 'utf-8');
+  await writeFile(join(logDir, getChainStatePath(agentId)), JSON.stringify(state, null, 2), 'utf-8');
 }
 
 // ---------------------------------------------------------------------------
@@ -105,9 +120,10 @@ export async function saveChainState(logDir: string, lastHash: string): Promise<
  * 3. The first entry's prevHash is "genesis".
  *
  * @param logDir - Absolute path to the audit log directory.
+ * @param agentId - Optional agent identifier. If set, only entries with this agentId are verified.
  * @returns Verification result with validity status and error details.
  */
-export async function verifyChain(logDir: string): Promise<ChainVerificationResult> {
+export async function verifyChain(logDir: string, agentId?: string): Promise<ChainVerificationResult> {
   let files: string[];
   try {
     const dirEntries = await readdir(logDir);
@@ -123,40 +139,54 @@ export async function verifyChain(logDir: string): Promise<ChainVerificationResu
     return { valid: true, entries: 0 };
   }
 
-  let entryIndex = 0;
-  let expectedPrevHash = GENESIS_HASH;
-
+  // Collect all entries, optionally filtering by agentId
+  const allEntries: AuditLogEntry[] = [];
   for (const file of files) {
     const content = await readFile(join(logDir, file), 'utf-8');
     const lines = content.split('\n').filter((line) => line.trim().length > 0);
-
     for (const line of lines) {
       const entry = JSON.parse(line) as AuditLogEntry;
-
-      // Check prevHash chain linkage
-      if (entry.prevHash !== expectedPrevHash) {
-        return {
-          valid: false,
-          entries: entryIndex,
-          firstBrokenAt: entryIndex,
-          error: `Entry ${entryIndex}: prevHash mismatch. Expected "${expectedPrevHash}", got "${entry.prevHash}".`,
-        };
+      if (agentId !== undefined) {
+        if (entry.agentId === agentId) {
+          allEntries.push(entry);
+        }
+      } else {
+        allEntries.push(entry);
       }
-
-      // Check self-hash integrity
-      const recomputed = computeEntryHash(entry);
-      if (entry.hash !== recomputed) {
-        return {
-          valid: false,
-          entries: entryIndex,
-          firstBrokenAt: entryIndex,
-          error: `Entry ${entryIndex}: hash mismatch. Expected "${recomputed}", got "${entry.hash}".`,
-        };
-      }
-
-      expectedPrevHash = entry.hash;
-      entryIndex++;
     }
+  }
+
+  if (allEntries.length === 0) {
+    return { valid: true, entries: 0 };
+  }
+
+  let entryIndex = 0;
+  let expectedPrevHash = GENESIS_HASH;
+
+  for (const entry of allEntries) {
+    // Check prevHash chain linkage
+    if (entry.prevHash !== expectedPrevHash) {
+      return {
+        valid: false,
+        entries: entryIndex,
+        firstBrokenAt: entryIndex,
+        error: `Entry ${entryIndex}: prevHash mismatch. Expected "${expectedPrevHash}", got "${entry.prevHash}".`,
+      };
+    }
+
+    // Check self-hash integrity
+    const recomputed = computeEntryHash(entry);
+    if (entry.hash !== recomputed) {
+      return {
+        valid: false,
+        entries: entryIndex,
+        firstBrokenAt: entryIndex,
+        error: `Entry ${entryIndex}: hash mismatch. Expected "${recomputed}", got "${entry.hash}".`,
+      };
+    }
+
+    expectedPrevHash = entry.hash;
+    entryIndex++;
   }
 
   return { valid: true, entries: entryIndex };

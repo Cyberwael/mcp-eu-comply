@@ -34,7 +34,7 @@ export function wrapWithCompliance<T extends McpServer>(
   server: T,
   config: ComplianceConfig
 ): T {
-  const logger = new AuditLogger(config.logging, config.dataResidency);
+  const logger = new AuditLogger(config.logging, config.dataResidency, config.agentId);
 
   // Set up oversight engine if configured
   let oversightEngine: OversightEngine | null = null;

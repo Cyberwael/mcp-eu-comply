@@ -31,16 +31,19 @@ import * as path from 'node:path';
 export class AuditLogger {
   private config: LoggingConfig;
   private dataResidency?: DataResidencyConfig;
+  private agentId?: string;
   private lastHash: string | null = null;
   private initialized = false;
 
   /**
    * @param config - Logging configuration (output directory, retention, hash algorithm).
    * @param dataResidency - Optional GDPR data residency and PII redaction config.
+   * @param agentId - Optional agent identifier for multi-agent chain isolation.
    */
-  constructor(config: LoggingConfig, dataResidency?: DataResidencyConfig) {
+  constructor(config: LoggingConfig, dataResidency?: DataResidencyConfig, agentId?: string) {
     this.config = config;
     this.dataResidency = dataResidency;
+    this.agentId = agentId;
   }
 
   /**
@@ -51,7 +54,7 @@ export class AuditLogger {
     if (this.initialized) return;
 
     await fs.mkdir(this.config.outputDir, { recursive: true });
-    const lastHash = await loadChainState(this.config.outputDir);
+    const lastHash = await loadChainState(this.config.outputDir, this.agentId);
     this.lastHash = lastHash;
     this.initialized = true;
   }
@@ -109,7 +112,7 @@ export class AuditLogger {
         ...(contentHash !== undefined ? { contentHash } : {}),
       },
       durationMs: params.durationMs,
-      ...(params.agentId !== undefined ? { agentId: params.agentId } : {}),
+      ...((this.agentId ?? params.agentId) !== undefined ? { agentId: this.agentId ?? params.agentId } : {}),
       ...(params.sessionId !== undefined ? { sessionId: params.sessionId } : {}),
       schemaVersion: '0.1.0',
     };
@@ -126,7 +129,7 @@ export class AuditLogger {
     await fs.appendFile(filePath, JSON.stringify(entry) + '\n', 'utf-8');
 
     // 7. Save chain state after each entry
-    await saveChainState(this.config.outputDir, this.lastHash);
+    await saveChainState(this.config.outputDir, this.lastHash, this.agentId);
 
     return entry;
   }
@@ -210,7 +213,7 @@ export class AuditLogger {
    */
   async shutdown(): Promise<void> {
     if (this.lastHash !== null) {
-      await saveChainState(this.config.outputDir, this.lastHash);
+      await saveChainState(this.config.outputDir, this.lastHash, this.agentId);
     }
   }
 
