@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { AuditLogger } from '../src/logger/audit-logger';
-import { verifyChain } from '../src/logger/hash-chain';
+import { verifyChain, computeEntryHash } from '../src/logger/hash-chain';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as os from 'node:os';
@@ -230,6 +230,97 @@ describe('AuditLogger', () => {
     // First entry's prevHash should be "genesis"
     const first = JSON.parse(lines[0]!);
     expect(first.prevHash).toBe('genesis');
+  });
+
+  // -------------------------------------------------------------------------
+  // CRITICAL TEST INVARIANT #2: chain-state.json persistence across restarts
+  // -------------------------------------------------------------------------
+  it('chain-state.json persistence across restarts — new logger continues chain', async () => {
+    const config: LoggingConfig = { outputDir: tmpDir };
+
+    // Session 1: log 3 entries, then shutdown
+    const logger1 = new AuditLogger(config);
+    await logger1.init();
+
+    let lastEntry;
+    for (let i = 0; i < 3; i++) {
+      lastEntry = await logger1.log({
+        tool: `session1_tool_${i}`,
+        args: { i },
+        risk: 'low',
+        oversight: defaultOversight,
+        result: { status: 'success' },
+        durationMs: 10,
+      });
+    }
+    await logger1.shutdown();
+
+    const lastHashFromSession1 = lastEntry!.hash;
+
+    // Session 2: create a BRAND NEW AuditLogger instance, log 1 more entry
+    const logger2 = new AuditLogger(config);
+    await logger2.init();
+
+    const newEntry = await logger2.log({
+      tool: 'session2_tool_0',
+      args: { fresh: true },
+      risk: 'medium',
+      oversight: defaultOversight,
+      result: { status: 'success' },
+      durationMs: 5,
+    });
+
+    // This proves chain continuity across process restarts:
+    // the new entry's prevHash must equal the last entry's hash from session 1
+    expect(newEntry.prevHash).toBe(lastHashFromSession1);
+
+    // Full chain must still be valid
+    const verification = await verifyChain(tmpDir);
+    expect(verification.valid).toBe(true);
+    expect(verification.entries).toBe(4);
+
+    await logger2.shutdown();
+  });
+
+  // -------------------------------------------------------------------------
+  // CRITICAL TEST INVARIANT #5: PII redacted BEFORE hash computation
+  // -------------------------------------------------------------------------
+  it('PII is redacted BEFORE hash — manual hash recomputation proves it', async () => {
+    const config: LoggingConfig = { outputDir: tmpDir };
+    const dataResidency: DataResidencyConfig = {
+      region: 'EU',
+      piiFields: ['email'],
+      redactInLogs: true,
+    };
+    const logger = new AuditLogger(config, dataResidency);
+    await logger.init();
+
+    await logger.log({
+      tool: 'send_email',
+      args: { email: 'test@example.com', amount: 100 },
+      risk: 'high',
+      oversight: defaultOversight,
+      result: { status: 'success' },
+      durationMs: 55,
+    });
+
+    // Read the logged entry from file
+    const content = await fs.readFile(
+      path.join(tmpDir, `${todayUTC()}.ndjson`),
+      'utf-8',
+    );
+    const loggedEntry = JSON.parse(content.trim());
+
+    // Verify the logged entry has redacted email
+    expect(loggedEntry.args.email).toBe('***REDACTED***');
+    expect(loggedEntry.args.amount).toBe(100);
+
+    // Now manually recompute the hash on the REDACTED entry
+    // (with hash field excluded, as computeEntryHash does)
+    const manualHash = computeEntryHash(loggedEntry);
+
+    // If this matches, it PROVES the hash was computed on the redacted version
+    expect(loggedEntry.hash).toBe(manualHash);
   });
 
   it('generateReport produces summary stats', async () => {

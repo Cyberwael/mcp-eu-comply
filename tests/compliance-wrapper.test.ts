@@ -199,6 +199,11 @@ describe('wrapWithCompliance', () => {
     expect(wrapped.server).toBe(server.server);
     expect(typeof wrapped.connect).toBe('function');
     expect(typeof wrapped.close).toBe('function');
+
+    // Critical Invariant #6: custom properties set on the original server
+    // must also be visible through the proxy (Proxy transparency)
+    (server as any)._customFlag = 'audit-trace-id-123';
+    expect((wrapped as any)._customFlag).toBe('audit-trace-id-123');
   });
 
   it('redacts PII in logged args', async () => {
