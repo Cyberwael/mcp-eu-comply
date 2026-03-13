@@ -1,7 +1,9 @@
 ---
 title: "EU AI Act and MCP Servers: What Article 12 Means for Your Agent Infrastructure"
+published: false
 description: "The EU AI Act requires audit logging, human oversight, and risk management for AI systems. Here's how to add compliance to MCP servers with one line of code."
-tags: [eu-ai-act, mcp, compliance, typescript, open-source]
+tags: eu-ai-act, mcp, compliance, typescript
+canonical_url:
 ---
 
 # EU AI Act and MCP Servers: What Article 12 Means for Your Agent Infrastructure

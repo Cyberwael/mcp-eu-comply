@@ -29,3 +29,4 @@ dist/
 *.tsbuildinfo
 .env
 .env.*
+docs/content/PUBLISHING_GUIDE.md
