@@ -30,3 +30,4 @@ dist/
 .env
 .env.*
 docs/content/PUBLISHING_GUIDE.md
+docs/content/nist-submission-draft.md
