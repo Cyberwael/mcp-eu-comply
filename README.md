@@ -14,6 +14,20 @@ One function call adds tamper-evident audit logging, human-in-the-loop oversight
 - **PII redaction** — deep recursive field redaction before storage (GDPR Article 5)
 - **Compliance report generation** — JSON summaries for auditors, covering any time period
 
+## Try it in 10 seconds
+
+```bash
+npx mcp-eu-comply demo
+```
+
+This runs a self-contained simulation: 7 tool calls across 4 risk levels, PII redaction, human oversight (approve/deny/timeout), and hash chain verification. No config needed.
+
+Use `--keep` to save the generated audit logs for inspection:
+
+```bash
+npx mcp-eu-comply demo --keep
+```
+
 ## Quick Start
 
 ```bash
@@ -201,6 +215,13 @@ console.log(result);
 
 ## CLI Tools
 
+Run an interactive demo:
+
+```bash
+npx mcp-eu-comply demo
+npx mcp-eu-comply demo --keep              # Save generated audit logs
+```
+
 Verify your audit chain:
 
 ```bash
@@ -262,7 +283,7 @@ npx mcp-eu-comply verify --dir ./audit-logs --agent payment-service
 
 > This package is **designed to meet** EU AI Act Article 12, 14, and 19 requirements. It is NOT certified or officially approved — the CEN/CENELEC harmonised standards are still being drafted. Use as part of a broader compliance strategy.
 
-Zero external runtime dependencies. Peer dependency on `@modelcontextprotocol/sdk >= 1.0.0`. Node.js >= 18.
+Zero external runtime dependencies. 87 tests. Peer dependency on `@modelcontextprotocol/sdk >= 1.0.0`. Node.js >= 18.
 
 ## Roadmap
 
@@ -272,6 +293,7 @@ Zero external runtime dependencies. Peer dependency on `@modelcontextprotocol/sd
 - [x] Deep recursive PII redaction
 - [x] Compliance report generation
 - [x] CLI validator (`npx mcp-eu-comply verify` + `report`)
+- [x] Interactive demo (`npx mcp-eu-comply demo`)
 - [ ] PDF audit reports
 - [ ] Dashboard SaaS
 - [x] DORA fintech + GDPR e-commerce templates

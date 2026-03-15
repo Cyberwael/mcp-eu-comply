@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.0] — 2026-03-15
+
+### Features
+- **Interactive demo command** — `npx mcp-eu-comply demo` runs a self-contained compliance simulation: 7 tool calls across 4 risk levels, PII redaction, human oversight (approve/deny/timeout), and hash chain verification. Zero config, ~5 seconds.
+- New CLI flags: `--keep` (preserve demo audit logs), `--dir` (custom output for demo)
+- Demo scenarios cover: read-only lookups (low risk), profile updates with PII (high), bulk exports (high), fund transfers with approval (critical), deletions denied by oversight (critical), DDL operations timed out (critical)
+
+### Why demo instead of PDF?
+We have 0 known users. PDF reports serve auditors — but nobody is auditing yet. The demo command lets anyone try the full compliance flow in 10 seconds, which drives adoption. PDF moves to v0.4.
+
+### Stats
+- 87 tests passing (11 test files)
+- Zero external runtime dependencies preserved
+- Zero-dep promise intact (no pdfkit or similar added)
+
+[0.3.0]: https://github.com/Cyberwael/mcp-eu-comply/releases/tag/v0.3.0
+
 ## [0.2.0] — 2026-03-13
 
 ### Features
