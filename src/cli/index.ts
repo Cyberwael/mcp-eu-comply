@@ -17,6 +17,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { runVerify } from './verify.js';
 import { runReport } from './report.js';
+import { runDemo } from './demo.js';
 
 // ---------------------------------------------------------------------------
 // Version
@@ -41,15 +42,19 @@ Usage:
 Commands:
   verify    Validate hash chain integrity of audit logs
   report    Generate a compliance summary from audit logs
+  demo      Run an interactive compliance demonstration
 
 Options:
   --dir <path>       Audit log directory (default: ./audit-logs)
   --agent <id>       Filter by agent ID (multi-agent setups)
   --format <type>    Report format: json | human (default: json)
+  --keep             Keep demo audit logs after completion
   --help, -h         Show this help message
   --version, -v      Show version
 
 Examples:
+  npx mcp-eu-comply demo
+  npx mcp-eu-comply demo --keep
   npx mcp-eu-comply verify --dir ./audit-logs
   npx mcp-eu-comply report --dir ./audit-logs --format human
   npx mcp-eu-comply verify --dir ./audit-logs --agent payment-service
@@ -66,6 +71,7 @@ async function main(): Promise<void> {
       dir: { type: 'string', default: './audit-logs' },
       agent: { type: 'string' },
       format: { type: 'string', default: 'json' },
+      keep: { type: 'boolean', default: false },
       help: { type: 'boolean', short: 'h', default: false },
       version: { type: 'boolean', short: 'v', default: false },
     },
@@ -84,7 +90,7 @@ async function main(): Promise<void> {
 
   const command = positionals[0];
 
-  if (!command || (command !== 'verify' && command !== 'report')) {
+  if (!command || (command !== 'verify' && command !== 'report' && command !== 'demo')) {
     console.log(HELP);
     process.exit(command ? 1 : 0);
   }
@@ -113,6 +119,19 @@ async function main(): Promise<void> {
 
     try {
       await runReport({ dir, format, agent });
+      process.exit(0);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error(`Error: ${message}`);
+      process.exit(2);
+    }
+  }
+
+  if (command === 'demo') {
+    try {
+      const keep = values.keep as boolean;
+      const demoDir = values.dir !== './audit-logs' ? (values.dir as string) : undefined;
+      await runDemo({ keep, dir: demoDir });
       process.exit(0);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
